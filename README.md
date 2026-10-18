@@ -51,9 +51,11 @@ The Claude workflows need the `CLAUDE_CODE_OAUTH_TOKEN` repository secret
 - `vX` is a moving tag pointing to the latest `vX.Y.Z`. Projects should reference `@v1`.
 - Breaking changes (renamed inputs, new required secrets) bump the major version.
 
-To release:
+`main` is protected (pull request required, no force push). To release, merge the change through a
+pull request, then tag the merge commit on `main`:
 
 ```bash
+git checkout main && git pull
 git tag vX.Y.Z && git push origin vX.Y.Z
 git tag -f vX vX.Y.Z && git push -f origin vX
 ```
