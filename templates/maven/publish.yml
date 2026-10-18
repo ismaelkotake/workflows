@@ -1,0 +1,13 @@
+name: Publish to GitHub Packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: ismaelkotake/workflows/.github/workflows/maven-publish.yml@v1
+    permissions:
+      contents: read
+      packages: write

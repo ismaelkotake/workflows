@@ -1,0 +1,79 @@
+name: Maven CI
+
+# Reusable workflow: build and test a Maven project.
+# Pushes run unit tests (`mvn test`); pull requests run unit + integration tests (`mvn verify`).
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Java version to build with.
+        type: string
+        default: '21'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: 'temurin'
+          cache: maven
+          server-id: github
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      - name: Build and test (unit only)
+        if: github.event_name == 'push'
+        run: mvn test --no-transfer-progress
+        env:
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and verify (unit + integration)
+        if: github.event_name == 'pull_request'
+        run: mvn verify --no-transfer-progress
+        env:
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          python3 << 'EOF'
+          import glob, xml.etree.ElementTree as ET, os
+
+          lines = ["## Test Coverage\n", "| Module | Instructions | Branches |", "|--------|-------------|----------|"]
+          found = False
+
+          for path in sorted(glob.glob("**/target/site/jacoco/jacoco.xml", recursive=True)):
+              module = path.split("/")[0]
+              try:
+                  root = ET.parse(path).getroot()
+                  stats = {}
+                  for c in root.findall("counter"):
+                      t = c.get("type")
+                      if t in ("INSTRUCTION", "BRANCH"):
+                          missed = int(c.get("missed", 0))
+                          covered = int(c.get("covered", 0))
+                          total = missed + covered
+                          stats[t] = f"{covered * 100 // total}%" if total > 0 else "N/A"
+                  lines.append(f"| {module} | {stats.get('INSTRUCTION', 'N/A')} | {stats.get('BRANCH', 'N/A')} |")
+                  found = True
+              except Exception:
+                  lines.append(f"| {module} | error parsing report | - |")
+
+          if not found:
+              lines.append("| - | No coverage reports found | - |")
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("\n".join(lines) + "\n")
+          EOF
