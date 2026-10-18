@@ -31,18 +31,22 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
 
+      - name: Select Maven command
+        run: |
+          if [ -f mvnw ]; then chmod +x mvnw; echo "MVN=./mvnw" >> "$GITHUB_ENV"; else echo "MVN=mvn" >> "$GITHUB_ENV"; fi
+
       - name: Set version from tag
         if: github.event_name == 'release'
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          mvn versions:set -DnewVersion="$VERSION" -DprocessAllModules=true --no-transfer-progress
+          $MVN versions:set -DnewVersion="$VERSION" -DprocessAllModules=true --no-transfer-progress
         env:
           MAVEN_USERNAME: ${{ github.actor }}
           MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish packages
-        run: mvn deploy -DskipTests --no-transfer-progress
+        run: $MVN deploy -DskipTests --no-transfer-progress
         env:
           MAVEN_USERNAME: ${{ github.actor }}
           MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

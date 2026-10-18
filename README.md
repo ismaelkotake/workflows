@@ -28,6 +28,8 @@ jobs:
       packages: read
 ```
 
+The Maven workflows use the project's Maven Wrapper (`./mvnw`) when present, otherwise the runner's `mvn`.
+
 A reusable workflow can never get more permissions than the caller grants, so callers must declare the
 `permissions` shown in the templates.
 
