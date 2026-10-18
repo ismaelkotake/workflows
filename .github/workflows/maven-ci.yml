@@ -10,6 +10,12 @@ on:
         description: Java version to build with.
         type: string
         default: '21'
+    secrets:
+      PACKAGES_TOKEN:
+        description: >-
+          Token with `read:packages` used to resolve dependencies from GitHub Packages of other
+          (private) repositories, e.g. kotake-parent. Falls back to GITHUB_TOKEN when not set.
+        required: false
 
 jobs:
   build:
@@ -36,14 +42,14 @@ jobs:
         run: mvn test --no-transfer-progress
         env:
           MAVEN_USERNAME: ${{ github.actor }}
-          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_PASSWORD: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Build and verify (unit + integration)
         if: github.event_name == 'pull_request'
         run: mvn verify --no-transfer-progress
         env:
           MAVEN_USERNAME: ${{ github.actor }}
-          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_PASSWORD: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Coverage summary
         if: always()
