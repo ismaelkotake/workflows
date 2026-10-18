@@ -10,7 +10,7 @@ Updating a workflow and moving the `v1` tag rolls the change out to every projec
 | Workflow | Purpose | Inputs | Secrets |
 |----------|---------|--------|---------|
 | `maven-ci.yml` | Build and test. Push: `mvn test`. Pull request: `mvn verify`. Writes a JaCoCo coverage summary. | `java-version` (default `21`) | `PACKAGES_TOKEN` (optional) |
-| `maven-publish.yml` | Deploy to GitHub Packages. On `release`, sets the version from the tag (`v1.2.3` → `1.2.3`). | `java-version` (default `21`) | — |
+| `maven-publish.yml` | Deploy to GitHub Packages. On `release`, sets the version from the tag (`v1.2.3` → `1.2.3`). | `java-version` (default `21`), `version-properties` (POM properties also set to the release version) | — |
 | `claude.yml` | Runs Claude Code when `@claude` is mentioned in issues, PR comments or reviews. | — | `CLAUDE_CODE_OAUTH_TOKEN` |
 | `claude-code-review.yml` | Automated Claude code review on pull requests. | — | `CLAUDE_CODE_OAUTH_TOKEN` |
 

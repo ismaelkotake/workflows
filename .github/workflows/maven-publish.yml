@@ -10,6 +10,12 @@ on:
         description: Java version to build with.
         type: string
         default: '21'
+      version-properties:
+        description: >-
+          Space-separated POM properties to also set to the release version (e.g. `kotake.version`),
+          for versions that must be literal instead of `${project.version}`.
+        type: string
+        default: ''
 
 jobs:
   publish:
@@ -38,10 +44,15 @@ jobs:
       - name: Set version from tag
         if: github.event_name == 'release'
         run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
+          VERSION="${TAG#v}"
           $MVN versions:set -DnewVersion="$VERSION" -DprocessAllModules=true --no-transfer-progress
+          for PROP in $VERSION_PROPERTIES; do
+            $MVN versions:set-property -Dproperty="$PROP" -DnewVersion="$VERSION" -DgenerateBackupPoms=false --no-transfer-progress
+          done
         env:
+          # Passed via env (not inline expressions) to avoid script injection
+          TAG: ${{ github.ref_name }}
+          VERSION_PROPERTIES: ${{ inputs.version-properties }}
           MAVEN_USERNAME: ${{ github.actor }}
           MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
